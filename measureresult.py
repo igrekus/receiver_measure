@@ -130,7 +130,7 @@ class MeasureResult:
             for j in range(1, ws.max_column)
         ]
 
-        self._table_data = [self._gen_value(col) for col in gens]
+        self._table_data.append([self._gen_value(col) for col in gens])
 
     def _gen_value(self, data):
         if not data:

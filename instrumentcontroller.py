@@ -151,7 +151,7 @@ class InstrumentController(QObject):
 
         for _ in range(19):
             print('tick')
-            time.sleep(0.1)
+            time.sleep(0.01)
 
         result = []
         print(result)
