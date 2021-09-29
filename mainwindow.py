@@ -105,10 +105,10 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def on_actParams_triggered(self):
         data = [
-            ('Корректировка', self._instrumentController.result.adjust),
-            ('Калибровка', self._instrumentController.cal_set),
-            ('Только основные', self._plotWidget.only_main_states),
-            ('Набор для коррекции', [1, '+25', '+85', '-60']),
+            # ('Корректировка', self._instrumentController.result.adjust),
+            # ('Калибровка', self._instrumentController.cal_set),
+            # ('Только основные', self._plotWidget.only_main_states),
+            ('Калибровка', [1, '+25', '+85', '-60']),
         ]
 
         values = fedit(data=data, title='Параметры')
