@@ -1,7 +1,5 @@
-import ast
+import random
 import time
-
-import numpy as np
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from forgot_again.file import load_ast_if_exists, pprint_to_file
@@ -23,12 +21,12 @@ class InstrumentController(QObject):
         super().__init__(parent=parent)
 
         addrs = load_ast_if_exists('instr.ini', default={
-            'Анализатор': 'GPIB1::18::INSTR',
-            'Источник': 'GPIB1::3::INSTR',
+            'АЦ': 'GPIB1::9::INSTR',
+            'Источник': 'GPIB1::4::INSTR',
         })
 
         self.requiredInstruments = {
-            'Анализатор': AnalyzerFactory(addrs['Анализатор']),
+            'АЦ': AnalyzerFactory(addrs['АЦ']),
             'Источник': SourceFactory(addrs['Источник']),
         }
 
@@ -39,17 +37,29 @@ class InstrumentController(QObject):
         }
 
         self.secondaryParams = SecondaryParams(required={
-            'param1': [
-                'Параметр1=',
-                {'start': 0.0, 'end': 10.0, 'step': 0.5, 'value': 4.7, 'suffix': ' В'}
+            'sweep_points': [
+                'Кол-во точек=',
+                {'start': 101.0, 'end': 1001.0, 'step': 10.0, 'value': 401.0, 'suffix': ''}
             ],
-            'param2': [
-                'Параметр2=',
-                {'start': 0.0, 'end': 10.0, 'step': 0.5, 'value': 5.0, 'suffix': ' В'}
+            'f_min': [
+                'Fмин=',
+                {'start': 1.0, 'end': 4.0, 'step': 0.5, 'value': 1.0, 'suffix': ' ГГц'}
             ],
-            'param3': [
-                'Параметр3=',
-                {'start': 0.0, 'end': 10.0, 'step': 0.5, 'value': 5.3, 'suffix': ' В'}
+            'f_max': [
+                'Fмакс=',
+                {'start': 1.0, 'end': 4.0, 'step': 0.5, 'value': 2.0, 'suffix': ' ГГц'}
+            ],
+            'p_in': [
+                'Pвх=',
+                {'start': -60.0, 'end': 0.0, 'step': 1.0, 'value': -20.0, 'suffix': ' дБм'}
+            ],
+            'src_u': [
+                'Uпит=',
+                {'start': 3.0, 'end': 3.5, 'step': 0.1, 'value': 3.3, 'suffix': ' В'}
+            ],
+            'src_i_max': [
+                'Iпот.макс=',
+                {'start': 10.0, 'end': 80.0, 'step': 1.0, 'value': 60.0, 'suffix': ' В'}
             ],
         })
         self.secondaryParams.load_from_config('params.ini')
@@ -119,7 +129,7 @@ class InstrumentController(QObject):
 
     def _init(self):
         self._instruments['Источник'].send('*RST')
-        self._instruments['Анализатор'].send('*RST')
+        self._instruments['АЦ'].send('*RST')
     # endregion
 
     def measure(self, token, params):
@@ -145,17 +155,79 @@ class InstrumentController(QObject):
         return True
 
     def _measure_tune(self, token, param, secondary):
-
+        pna = self._instruments['АЦ']
         src = self._instruments['Источник']
-        sa = self._instruments['Анализатор']
 
-        for _ in range(19):
-            print('tick')
-            time.sleep(0.01)
+        sweep_points = secondary['sweep_points']
+        pna_f_min = secondary['f_min']
+        pna_f_max = secondary['f_max']
+        p_in = secondary['p_in']
+        src_u = secondary['src_u']
+        src_i_max = secondary['src_i_max']
 
-        result = []
-        print(result)
-        return result
+        pna.send('SYST:PRES')
+        pna.query('*OPC?')
+        # pna.send('SENS1:CORR ON')
+
+        pna.send(f'SYSTem:FPRESet')
+
+        pna.send('CALC1:PAR:DEF:EXT "CH1_S11",S11')
+        # pna.send('CALC1:PAR:DEF:EXT "CH1_S21",S21')
+
+        pna.send(f'DISPlay:WINDow1:STATe ON')
+        pna.send(f"DISPlay:WINDow1:TRACe1:FEED 'CH1_S11'")
+        # pna.send(f"DISPlay:WINDow1:TRACe2:FEED 'CH1_S21'")
+
+        # pna.send(f'SENSe{chan}:SWEep:TRIGger:POINt OFF')
+        pna.send(f'SOUR1:POW1 {p_in}dbm')
+
+        pna.send(f'SENS1:SWE:POIN {sweep_points}')
+
+        pna.send(f'SENS1:FREQ:STAR {pna_f_min}')
+        pna.send(f'SENS1:FREQ:STOP {pna_f_max}')
+        # pna.send(f'SENS1:POW:ATT AREC, {primary["Pin"]}')
+
+        pna.send('SENS1:SWE:MODE CONT')
+        pna.send(f'FORM:DATA ASCII')
+
+        src.send('INST:SEL OUTP1')
+        src.send(f'APPLY {src_u}V,{src_i_max}mA')
+        src.send('OUTP ON')
+
+        # measurement
+        res = []
+        for p in [-15, -16, -15, -16, -15, -16, -15, -16, -15, -16, -15, -16, -15, -16, -15, -16]:
+            pna.send(f'CALC1:PAR:SEL "CH1_S11"')
+            pna.query('*OPC?')
+            # res = pna.query(f'CALC1:DATA:SNP? 1')
+
+            if not mock_enabled:
+                time.sleep(0.5)
+
+            pna.send(f'SOUR1:POW1 {p}dbm')
+
+            # pna.send(f'CALC1:PAR:SEL "CH1_S21"')
+            # pna.query('*OPC?')
+
+            if not mock_enabled:
+                time.sleep(0.5)
+
+            offs = random.randint(-4, 4)
+            pna.send(f'CALC:OFFS:MAGN {offs}')
+            slop = random.random()
+            pna.send(f'CALC:OFFS:MAGN:SLOP {slop}')
+
+            if not mock_enabled:
+                time.sleep(0.1)
+
+            pna.send(f'DISP:WIND:TRAC:Y:AUTO')
+
+            res.append(p)
+
+        src.send('OUTP OFF')
+        pna.send('SYST:PRES')
+
+        return res
 
     def _add_measure_point(self, data):
         print('measured point:', data)

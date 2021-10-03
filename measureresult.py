@@ -8,6 +8,7 @@ from collections import defaultdict
 from textwrap import dedent
 
 from forgot_again.file import load_ast_if_exists, pprint_to_file, make_dirs, open_explorer_at
+from forgot_again.string import now_timestamp
 
 
 class MeasureResult:
@@ -100,9 +101,9 @@ class MeasureResult:
 
     def export_excel(self):
         make_dirs(self.path)
-        file_name = f'./{self.path}/out.xlsx'
+        file_name = f'./{self.path}/receiver_stage3_{now_timestamp()}.xlsx'
 
-        df = pd.DataFrame(self._processed)
+        df = pd.DataFrame(self._table_data, columns=self._table_header)
 
         df.to_excel(file_name, engine='openpyxl')
         open_explorer_at(os.path.abspath(file_name))
