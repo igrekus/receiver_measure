@@ -41,7 +41,7 @@
     <item>
      <widget class="QGroupBox" name="grpProgress">
       <property name="title">
-       <string>Прогресс измерения</string>
+       <string>Статистика</string>
       </property>
       <property name="checkable">
        <bool>false</bool>

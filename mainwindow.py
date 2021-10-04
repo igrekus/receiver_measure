@@ -66,6 +66,9 @@ class MainWindow(QMainWindow):
 
         self._measureWidget.updateWidgets(self._instrumentController.secondaryParams)
 
+        # GUI tune
+        self._ui.pteditProgress.setVisible(False)
+
     def _saveScreenshot(self):
         screen = QGuiApplication.primaryScreen()
         if not screen:
