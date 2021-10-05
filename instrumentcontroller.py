@@ -4,7 +4,7 @@ import time
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from forgot_again.file import load_ast_if_exists, pprint_to_file
 
-from instr.instrumentfactory import mock_enabled, SourceFactory, AnalyzerFactory
+from instr.instrumentfactory import mock_enabled, SourceFactory, NetworkAnalyzerFactory
 from measureresult import MeasureResult
 from secondaryparams import SecondaryParams
 
@@ -26,7 +26,7 @@ class InstrumentController(QObject):
         })
 
         self.requiredInstruments = {
-            'АЦ': AnalyzerFactory(addrs['АЦ']),
+            'АЦ': NetworkAnalyzerFactory(addrs['АЦ']),
             'Источник': SourceFactory(addrs['Источник']),
         }
 
