@@ -159,11 +159,11 @@ class InstrumentController(QObject):
         src = self._instruments['Источник']
 
         sweep_points = secondary['sweep_points']
-        pna_f_min = secondary['f_min']
-        pna_f_max = secondary['f_max']
+        pna_f_min = secondary['f_min'] * GIGA
+        pna_f_max = secondary['f_max'] * GIGA
         p_in = secondary['p_in']
         src_u = secondary['src_u']
-        src_i_max = secondary['src_i_max']
+        src_i_max = secondary['src_i_max'] * MILLI
 
         pna.send('SYST:PRES')
         pna.query('*OPC?')
@@ -183,15 +183,15 @@ class InstrumentController(QObject):
 
         pna.send(f'SENS1:SWE:POIN {sweep_points}')
 
-        pna.send(f'SENS1:FREQ:STAR {pna_f_min}')
-        pna.send(f'SENS1:FREQ:STOP {pna_f_max}')
+        pna.send(f'SENS1:FREQ:STAR {pna_f_min}Hz')
+        pna.send(f'SENS1:FREQ:STOP {pna_f_max}Hz')
         # pna.send(f'SENS1:POW:ATT AREC, {primary["Pin"]}')
 
         pna.send('SENS1:SWE:MODE CONT')
         pna.send(f'FORM:DATA ASCII')
 
         src.send('INST:SEL OUTP1')
-        src.send(f'APPLY {src_u}V,{src_i_max}mA')
+        src.send(f'APPLY {src_u}V,{src_i_max}A')
         src.send('OUTP ON')
 
         # measurement
