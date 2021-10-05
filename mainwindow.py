@@ -6,7 +6,7 @@ from subprocess import Popen
 
 from PyQt5 import uic
 from PyQt5.QtGui import QGuiApplication
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 
 from formlayout.formlayout import fedit
@@ -65,6 +65,8 @@ class MainWindow(QMainWindow):
         self._instrumentController.pointReady.connect(self.on_point_ready)
 
         self._measureWidget.updateWidgets(self._instrumentController.secondaryParams)
+
+        self._measureWidget.sampleNotFound.connect(self.on_sampleNotFound)
 
         # GUI tune
         self._ui.pteditProgress.setVisible(False)
@@ -145,3 +147,10 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def on_btnScreenShot_clicked(self):
         self._saveScreenshot()
+
+    @pyqtSlot()
+    def on_sampleNotFound(self):
+        QMessageBox.warning(self,
+                            'Ошибка: образец не найден',
+                            'Проверьте подключение образца (схему включение, прижим, etc.)',
+                            QMessageBox.Ok)

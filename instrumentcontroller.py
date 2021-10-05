@@ -91,11 +91,13 @@ class InstrumentController(QObject):
         print(f'call check with {token} {params}')
         device, secondary = params
         self.present = self._check(token, device, secondary)
-        print('sample pass')
 
     def _check(self, token, device, secondary):
         print(f'launch check with {self.deviceParams[device]} {self.secondaryParams}')
         self._init()
+        res = random.choice([1, 2])
+        if res == 2:
+            return False
         return True
     # endregion
 
