@@ -199,6 +199,12 @@ class InstrumentController(QObject):
         # measurement
         res = []
         for p in [-15, -16, -15, -16, -15, -16, -15, -16, -15, -16, -15, -16, -15, -16, -15, -16]:
+            if token.cancelled:
+                src.send('OUTP OFF')
+                time.sleep(0.2)
+                pna.send('SYST:PRES')
+                raise RuntimeError('measurement cancelled')
+
             pna.send(f'CALC1:PAR:SEL "CH1_S11"')
             pna.query('*OPC?')
             # res = pna.query(f'CALC1:DATA:SNP? 1')
